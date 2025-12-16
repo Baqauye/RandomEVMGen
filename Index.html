@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Generate random EVM-compatible Ethereum addresses (0x + 40 hex chars) for testing, development, and simulations. 100% client-side, no data leaves your browser." />
+    <meta property="og:title" content="EVM Address Generator" />
+    <meta property="og:description" content="Client-side Ethereum address generator for developers." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://evm-gen.vercel.app" />
+    <title>EVM Address Generator — Client-Side, Privacy-First</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        #addressList {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            white-space: nowrap;
+        }
+        .address {
+            padding: 4px 0;
+            overflow-x: auto;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #667eea;
+            min-height: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 EVM Address Generator</h1>
+
+        <div class="info">
+            <strong>Note:</strong> These are purely random, EVM-compatible addresses (0x + 40 hex chars) for testing/simulation only.
+            <br>⚠️ None are associated with real private keys. Never use them in production!
+        </div>
+
+        <div class="status" id="status">Ready to generate addresses</div>
+
+        <div class="button-group">
+            <button onclick="generateAddresses()">Generate 1000</button>
+            <button onclick="downloadTxt()">Download TXT</button>
+            <button onclick="copyToClipboard()">Copy All</button>
+        </div>
+
+        <div id="addressList"></div>
+    </div>
+
+    <script>
+        let addresses = [];
+
+        function generateRandomAddress() {
+            const chars = '0123456789abcdef';
+            let addr = '0x';
+            for (let i = 0; i < 40; i++) {
+                addr += chars[Math.floor(Math.random() * 16)];
+            }
+            return addr;
+        }
+
+        function generateAddresses() {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Generating 1,000 addresses…';
+
+            // Offload heavy loop to next tick to avoid UI freeze (still sync, but responsive)
+            setTimeout(() => {
+                addresses = Array.from({ length: 1000 }, generateRandomAddress);
+                displayAddresses();
+                statusEl.textContent = '✅ Generated 1,000 addresses (client-side only)';
+            }, 10);
+        }
+
+        function displayAddresses() {
+            const listEl = document.getElementById('addressList');
+            // Efficient DOM update
+            listEl.innerHTML = addresses
+                .map((addr, i) => `<div class="address">${i + 1}. ${addr}</div>`)
+                .join('');
+        }
+
+        function downloadTxt() {
+            if (!addresses.length) {
+                alert('⚠️ Generate addresses first!');
+                return;
+            }
+            const blob = new Blob([addresses.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = Object.assign(document.createElement('a'), {
+                href: url,
+                download: `evm_addresses_${new Date().toISOString().slice(0,10)}.txt`
+            });
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            if (!addresses.length) {
+                alert('⚠️ Generate addresses first!');
+                return;
+            }
+            const text = addresses.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const status = document.getElementById('status');
+                status.textContent = '✅ Copied to clipboard!';
+                setTimeout(() => {
+                    status.textContent = '✅ Generated 1,000 addresses (client-side only)';
+                }, 2000);
+            }).catch(() => {
+                alert('❌ Clipboard access denied. Try enabling permissions or using Chrome/Firefox.');
+            });
+        }
+
+        // Auto-generate on first load (user-friendly)
+        document.addEventListener('DOMContentLoaded', generateAddresses);
+    </script>
+</body>
+</html>
